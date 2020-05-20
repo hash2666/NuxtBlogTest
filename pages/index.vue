@@ -1,92 +1,82 @@
 <template>
-  <v-layout
-    column
-    justify-center
-    align-center
-  >
-    <v-flex
-      xs12
-      sm8
-      md6
-    >
+  <v-layout column justify-center align-center>
+    <v-flex xs12 sm8 md6>
       <div class="text-center">
         <logo />
         <vuetify-logo />
       </div>
-      <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
-        </v-card-title>
-        <v-card-text>
-          <p>Vuetify is a progressive Material Design component framework for Vue.js. It was designed to empower developers to create amazing applications.</p>
-          <p>
-            For more information on Vuetify, check out the <a
-              href="https://vuetifyjs.com"
-              target="_blank"
-            >
-              documentation
-            </a>.
-          </p>
-          <p>
-            If you have questions, please join the official <a
-              href="https://chat.vuetifyjs.com/"
-              target="_blank"
-              title="chat"
-            >
-              discord
-            </a>.
-          </p>
-          <p>
-            Find a bug? Report it on the github <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              title="contribute"
-            >
-              issue board
-            </a>.
-          </p>
-          <p>Thank you for developing with Vuetify and I look forward to bringing more exciting features in the future.</p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3">
-          <a
-            href="https://nuxtjs.org/"
-            target="_blank"
-          >
-            Nuxt Documentation
-          </a>
-          <br>
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-          >
-            Nuxt GitHub
-          </a>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            nuxt
-            to="/inspire"
-          >
-            Continue
-          </v-btn>
-        </v-card-actions>
-      </v-card>
     </v-flex>
+
+    <v-card v-for="work in works" :key="work.sys.id">
+      <v-card class="d-flex flex-row mb-3" />
+      <v-img
+        height="250px"
+        width="500px"
+        :style="
+          'background-image: url(' +
+            work.fields.image.fields.file.url +
+            '); background-size: cover;'
+        "
+      ></v-img>
+
+      <v-card-title>
+        <h4>{{ work.fields.title }}</h4>
+      </v-card-title>
+
+      <v-card-subtitle>
+        <h4>{{ work.fields.subtitle }}</h4>
+      </v-card-subtitle>
+
+      <v-card-actions>
+        <v-btn text>Share</v-btn>
+
+        <v-btn color="purple" text>
+          Explore
+        </v-btn>
+
+        <v-spacer></v-spacer>
+
+        <v-btn icon @click="show = !show">
+          <v-icon>{{ show ? "mdi-chevron-up" : "mdi-chevron-down" }}</v-icon>
+        </v-btn>
+      </v-card-actions>
+
+      <v-expand-transition>
+        <div v-show="show">
+          <v-divider></v-divider>
+
+          <v-card-text v-for="tag in work.fields.tag" :key="tag.sys.id">
+            {{ tag.fields.name }}
+          </v-card-text>
+        </div>
+      </v-expand-transition>
+    </v-card>
   </v-layout>
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue'
-import VuetifyLogo from '~/components/VuetifyLogo.vue'
-
+import Logo from "~/components/Logo.vue";
+import VuetifyLogo from "~/components/VuetifyLogo.vue";
+import { createClient } from "~/plugins/contentful.js";
+const client = createClient();
 export default {
   components: {
     Logo,
     VuetifyLogo
+  },
+  asyncData() {
+    return Promise.all([
+      client.getEntries({
+        content_type: "work", // workタイプの記事データを全取得
+        order: "-sys.createdAt" // 作成日時順に並べる
+      })
+    ])
+      .then(([works]) => {
+        return {
+          works: works.items // 取得したデータを配列worksに入れる
+        };
+      })
+      .catch(console.error);
   }
-}
+};
 </script>
